@@ -1,39 +1,41 @@
-name: DAST Scan with OWASP ZAP
+name: DAST Scan with OWASP ZAP
 
 on: [push]
 
 jobs:
   dast:
-    name: Run DAST with OWASP ZAP
+    name: Run DAST with OWASP ZAP
     runs-on: ubuntu-latest
 
     steps:
+      # 1 – Fetch the PHP app
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4          # ← v4 is the latest maintained version
 
+      # 2 – Set up PHP and start the built‑in server
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
 
-      - name: Start PHP built-in web server
+      - name: Start PHP server
         run: php -S 127.0.0.1:8000 index.php &
       
-      - name: Wait for the server to start
+      - name: Wait for the server
         run: sleep 5
 
-      - name: Run OWASP ZAP Baseline Scan
+      # 3 – Run the OWASP ZAP baseline scan
+      - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.6.1
         with:
           target: 'http://127.0.0.1:8000/?name=test'
-          fail_action: true
-          docker_name: 'owasp/zap2docker-stable'
-          rules_file_name: ''
-          cmd_options: '-a' # active scan mode (limited in baseline scan)
+          cmd_options: '-a'          # active checks (limited in baseline)
+          fail_action: true          # mark job failed if issues found
 
-      # Optional: Upload ZAP report
-      - name: Upload ZAP Report
-        uses: actions/upload-artifact@v3
+      # 4 – Attach the HTML report to the run
+      - name: Upload ZAP report
+        if: always()                 # run even if the scan fails
+        uses: actions/upload-artifact@v4   # ← upgrade fixes the deprecation error
         with:
           name: zap-report
-          path: zap-report.html
+          path: zap_report.html      # adjust if you save the file elsewhere
