@@ -18,11 +18,6 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-/* ── SQLite setup (auto‑create on first run) ── */
-$db = new SQLite3('demo.db');
-$db->exec("CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY, msg TEXT)");
-$db->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)");
-$db->exec("INSERT OR IGNORE INTO users (id, username, password) VALUES (1,'admin','admin')");
 
 /* ── Parameters (no validation on purpose) ── */
 $name = $_GET['name']  ?? '';
@@ -40,13 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $db->exec("INSERT INTO comments (msg) VALUES ('{$_POST['comment']}')");
 }
 
-/* ── 3. SQL injection (login check) ── */
-$loginResult = '';
-if ($user || $pass) {
-    $sql = "SELECT * FROM users WHERE username='$user' AND password='$pass'";
-    $res = $db->querySingle($sql, true);
-    $loginResult = $res ? "Logged in as {$res['username']}" : 'Login failed';
-}
 
 /* ── 4. Command injection ── */
 $cmdOutput = $cmd ? shell_exec($cmd) : '';
@@ -85,22 +73,7 @@ if ($url) {
     <button>Leave comment</button>
   </form>
   <ul>
-    <?php
-      $res = $db->query("SELECT msg FROM comments ORDER BY id DESC");
-      while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
-          echo "<li>{$row['msg']}</li>"; // unsanitized → stored XSS
-      }
-    ?>
   </ul>
-
-  <!-- 3. SQL injection login -->
-  <h2>Login (vulnerable to SQLi)</h2>
-  <form>
-    <input name="user" placeholder="username">
-    <input name="pass" placeholder="password">
-    <button>Login</button>
-  </form>
-  <p><?= $loginResult ?></p>
 
   <!-- 4. Command injection -->
   <h2>Run a shell command</h2>
@@ -130,11 +103,5 @@ if ($url) {
   <form method="POST" action="?reset=1">
     <button style="color:red">Wipe all comments</button>
   </form>
-  <?php
-    if (isset($_GET['reset'])) {
-        $db->exec("DELETE FROM comments");   // no CSRF protection
-        echo "<p>Guestbook wiped.</p>";
-    }
-  ?>
 </body>
 </html>
