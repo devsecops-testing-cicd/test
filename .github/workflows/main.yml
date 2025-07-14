@@ -1,18 +1,39 @@
-name: Run DAST
-on: push
+name: DAST Scan with OWASP ZAP
+
+on: [push]
+
 jobs:
-  zap_scan:
+  dast:
+    name: Run DAST with OWASP ZAP
     runs-on: ubuntu-latest
-    name: Run DAST scan on the web application
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
         with:
-          ref: master
-      - name: ZAP Scan
+          php-version: '8.1'
+
+      - name: Start PHP built-in web server
+        run: php -S 127.0.0.1:8000 index.php &
+      
+      - name: Wait for the server to start
+        run: sleep 5
+
+      - name: Run OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.6.1
         with:
+          target: 'http://127.0.0.1:8000/?name=test'
+          fail_action: true
           docker_name: 'owasp/zap2docker-stable'
-          target: 'http://testphp.vulnweb.com/'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
+          rules_file_name: ''
+          cmd_options: '-a' # active scan mode (limited in baseline scan)
+
+      # Optional: Upload ZAP report
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-report
+          path: zap-report.html
