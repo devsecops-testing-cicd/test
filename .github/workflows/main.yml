@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       # Runtime image is enough; it already contains the PHP CLI
-      image: cgr.dev/chainguard/php:latest
+      image: cgr.dev/chainguard/php:latest-dev
       options: --entrypoint ''     # ignore the default entrypoint
     steps:
       - uses: actions/checkout@v4
