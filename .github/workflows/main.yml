@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       # Runtime image is enough; it already contains the PHP CLI
-      image: cgr.dev/chainguard/php:latest :contentReference[oaicite:0]{index=0}
+      image: cgr.dev/chainguard/php:latest
       options: --entrypoint ''     # ignore the default entrypoint
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +67,7 @@ jobs:
           provenance: true       # emits SLSA provenance
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3 :contentReference[oaicite:1]{index=1}
+        uses: sigstore/cosign-installer@v3
 
       - name: Sign image (keyless, via OIDC)
         env:
